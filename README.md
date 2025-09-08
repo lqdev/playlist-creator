@@ -37,8 +37,24 @@ pip install spotipy requests
    - Copy your `CLIENT_ID` and `CLIENT_SECRET`
 
 2. **Configure the Application**
-   - Edit `playlist_creator/main.py`
-   - Replace `your_client_id_here` and `your_client_secret_here` with your actual credentials
+   - Copy `.env.example` to `.env`: `cp .env.example .env`
+   - Edit `.env` and replace the placeholder values with your actual credentials:
+     ```
+     SPOTIFY_CLIENT_ID=your_actual_client_id
+     SPOTIFY_CLIENT_SECRET=your_actual_client_secret
+     ```
+   
+   **Alternative**: Set environment variables directly:
+   ```powershell
+   # Windows PowerShell
+   $env:SPOTIFY_CLIENT_ID="your_actual_client_id"
+   $env:SPOTIFY_CLIENT_SECRET="your_actual_client_secret"
+   ```
+   ```bash
+   # Linux/Mac
+   export SPOTIFY_CLIENT_ID="your_actual_client_id"
+   export SPOTIFY_CLIENT_SECRET="your_actual_client_secret"
+   ```
 
 ## Usage
 
