@@ -9,8 +9,10 @@ You'll need to set up a Spotify app at https://developer.spotify.com/dashboard/
 to get your CLIENT_ID and CLIENT_SECRET.
 """
 
+import argparse
 import os
 import re
+import sys
 import time
 import urllib.parse
 from datetime import datetime
@@ -391,6 +393,15 @@ def save_file(content, filename, output_dir="output"):
 
 def main():
     """Main function."""
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Convert Spotify playlists to markdown and M3U formats')
+    parser.add_argument('--url', type=str, help='Spotify playlist URL or ID')
+    parser.add_argument('--choice', type=str, choices=['1', '2', '3', '4', '5'], 
+                       help='Format choice: 1=Markdown, 2=Spotify M3U, 3=YouTube M3U, 4=Fast YouTube M3U, 5=All')
+    parser.add_argument('--batch', action='store_true', help='Run in batch mode (non-interactive)')
+    
+    args = parser.parse_args()
+    
     # Get credentials from environment variables
     client_id, client_secret = get_spotify_credentials()
 
@@ -398,40 +409,47 @@ def main():
     if not validate_credentials(client_id, client_secret):
         print("Spotify credentials not found or invalid!")
         print(get_config_instructions())
-        return
+        return False
 
     # Setup Spotify client
     sp = setup_spotify_client(client_id, client_secret)
     if not sp:
-        return
+        return False
 
-    # Get playlist URL from user
-    playlist_url = input("Enter Spotify playlist URL or ID: ").strip()
+    # Get playlist URL - from args or user input
+    if args.url:
+        playlist_url = args.url.strip()
+    else:
+        playlist_url = input("Enter Spotify playlist URL or ID: ").strip()
 
     # Extract playlist ID
     playlist_id = extract_playlist_id(playlist_url)
     if not playlist_id:
         print("Invalid Spotify playlist URL or ID.")
-        return
+        return False
 
     print(f"Fetching playlist data for ID: {playlist_id}")
 
     # Get playlist data
     playlist, tracks = get_playlist_data(sp, playlist_id)
     if not playlist:
-        return
+        return False
 
     print(f"Found playlist: '{playlist['name']}' with {len(tracks)} tracks")
 
-    # Ask user what formats they want
-    print("\nWhat formats would you like to generate?")
-    print("1. Markdown with YouTube links (falls back to Spotify)")
-    print("2. M3U with Spotify URLs")
-    print("3. YouTube M3U (VLC playable - searches YouTube)")
-    print("4. YouTube M3U (fast - search URLs only)")
-    print("5. All formats")
+    # Get format choice - from args or user input
+    if args.choice:
+        choice = args.choice
+    else:
+        # Ask user what formats they want
+        print("\nWhat formats would you like to generate?")
+        print("1. Markdown with YouTube links (falls back to Spotify)")
+        print("2. M3U with Spotify URLs")
+        print("3. YouTube M3U (VLC playable - searches YouTube)")
+        print("4. YouTube M3U (fast - search URLs only)")
+        print("5. All formats")
 
-    choice = input("Enter choice (1-5): ").strip()
+        choice = input("Enter choice (1-5): ").strip()
 
     # Create safe filename base and output directory
     safe_name = re.sub(r"[^\w\s-]", "", playlist["name"]).strip()
@@ -479,15 +497,20 @@ def main():
 
     if success_count > 0:
         print(f"\nSuccessfully generated {success_count} file(s)!")
-        print("\nHow to use your files:")
-        print("📄 Markdown: Host on GitHub, your website, etc. (now with YouTube links!)")
-        print("🎵 Spotify M3U: Import into players that support Spotify")
-        print("▶️  YouTube M3U: Open directly in VLC - should play automatically!")
-        print("🔍 YouTube Search M3U: Contains search URLs you can manually verify")
-        print("\nTo play in VLC: File → Open File → Select the .m3u file")
+        if not args.batch:
+            print("\nHow to use your files:")
+            print("📄 Markdown: Host on GitHub, your website, etc. (now with YouTube links!)")
+            print("🎵 Spotify M3U: Import into players that support Spotify")
+            print("▶️  YouTube M3U: Open directly in VLC - should play automatically!")
+            print("🔍 YouTube Search M3U: Contains search URLs you can manually verify")
+            print("\nTo play in VLC: File → Open File → Select the .m3u file")
+        return True
     else:
         print("No files were generated.")
+        return False
 
 
 if __name__ == "__main__":
-    main()
+    success = main()
+    if not success:
+        sys.exit(1)
