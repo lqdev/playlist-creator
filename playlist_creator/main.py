@@ -189,7 +189,11 @@ def generate_markdown(playlist, tracks):
     print(f"Found YouTube links for {youtube_found_count}/{total_tracks} tracks")
 
     markdown += "---\n\n"
-    markdown += "*Generated using Spotify Web API with YouTube link integration*\n"
+    markdown += "*Generated using Spotify Web API with YouTube link integration*\n\n"
+    
+    # Add original Spotify playlist link
+    if playlist.get("external_urls", {}).get("spotify"):
+        markdown += f"**Original Spotify Playlist:** [Listen on Spotify]({playlist['external_urls']['spotify']})\n"
 
     return markdown
 
